@@ -1,12 +1,12 @@
 # Numismatist – Coin Collection Manager
 
-A secure, AJAX-driven WordPress plugin for managing a personal coin (numismatics) collection. The collection is displayed on any page of your site using the shortcode `[numismatist]`. All CRUD operations are available directly on the page for logged-in administrators.
+A secure, multi-user, AJAX-driven WordPress plugin for managing personal coin (numismatics) collections. Each registered user manages their own completely isolated collection. Use the shortcode `[numismatist]` to display the collection on any page.
 
 ## Quick Start
 
 1. Install and activate the plugin.
-2. Create a new page, insert the shortcode `[numismatist]` and publish it.
-3. Open the page as an administrator — you will see the Add / Edit / Delete controls.
+2. Create a new page, insert `[numismatist]`, publish it.
+3. Any registered user who opens that page gets their own private collection with full CRUD controls.
 
 ## Shortcode
 
@@ -14,20 +14,24 @@ A secure, AJAX-driven WordPress plugin for managing a personal coin (numismatics
 [numismatist]
 ```
 
-| Visitors (not logged in) | Administrators (`manage_options`) |
+| Who | What they see |
 |---|---|
-| Table with search, year & material filters, pagination | Everything above + Add button, edit ✏ and delete 🗑 icon buttons, modal form with Media Library |
+| Logged-in user | Their own coins + Add button + ✏ Edit / 🗑 Delete icon buttons + modal form |
+| Guest (not logged in) | Read-only table (empty — guests have no coins) |
 
 The shortcode can be placed on multiple pages simultaneously.
 
 ## Features
 
-- **AJAX-driven** — search, filters, pagination, and all CRUD operations work without page reloads.
-- **Modal editor** — click a coin's name (or the pencil icon) to open a full-featured edit form.
+- **Multi-user isolation** — every user sees and manages only their own coins. The `user_id` column in the DB table enforces this at the query level; no user can read or modify another user's records.
+- **AJAX-driven** — search, filters, pagination, and all CRUD operations without page reloads.
+- **Any logged-in user** can use the plugin (not just admins). The `manage_options` restriction was removed from CRUD operations.
+- **Modal editor** — click a coin name or the ✏ icon to open a full edit form.
 - **Media Library** — native WordPress media uploader for coin photos.
-- **Security** — nonce verification, `manage_options` capability check, full input sanitization (`sanitize_text_field`, `absint`, `esc_url_raw`, `sanitize_textarea_field`), `$wpdb->prepare()` on every query.
-- **Migrations** — extendable `Num_Migrations` class for future schema changes (zero downtime, idempotent).
-- **Performance** — CSS and JS are enqueued only on pages that contain the shortcode (frontend) or on the plugin's own admin info page.
+- **Compact icon buttons** — SVG pencil / trash icons instead of text buttons in table rows.
+- **Yellow Cancel button** — distinct visual for the Скасувати action in the modal footer.
+- **Security** — nonce verification, `is_user_logged_in()` check, all input sanitized, `$wpdb->prepare()` on every query, `user_id` scoping prevents cross-user data access.
+- **Migrations** — extendable `Num_Migrations` class; v1.2.0 migration adds `user_id` to existing installs automatically.
 
 ## Requirements
 
@@ -41,33 +45,34 @@ The shortcode can be placed on multiple pages simultaneously.
 
 1. Copy the `Numismatist/` folder to `wp-content/plugins/`.
 2. Activate the plugin in **Plugins → Installed Plugins**.
-3. Go to **Монети** in the admin sidebar to see the setup guide and shortcode.
+3. Open **Монети** in the WordPress admin sidebar for the setup guide and shortcode.
+
+> **Upgrading from v1.0.0 or v1.1.0?** Simply activate the new version. The migration runs automatically and adds the `user_id` column to the existing table without data loss.
 
 ## Admin Panel
 
-The **Монети** menu item in the WordPress admin does **not** contain the table. It shows:
+The **Монети** admin menu item (visible only to `manage_options` users) shows:
+- The shortcode to copy.
+- Step-by-step setup instructions.
+- Multi-user feature explanation.
 
-- The shortcode to copy (`[numismatist]`).
-- Step-by-step instructions on how to add it to a page.
-- Tips about search, filters, and photo uploads.
-
-All data management happens on the **frontend page** where the shortcode is placed.
+All coin data management happens on the **frontend page** where `[numismatist]` is placed.
 
 ## File Structure
 
 ```
 Numismatist/
-├── numismatist.php              # Entry point: constants, menu, activation hook, admin info page
+├── numismatist.php              # Entry point: constants, activation, menu, admin info page
 ├── includes/
-│   ├── db-setup.php             # Table creation via dbDelta (safe to re-run)
-│   ├── class-migrations.php     # Incremental DB migrations
-│   ├── class-crud.php           # All database operations (read, insert, update, delete)
-│   ├── class-ajax.php           # AJAX endpoint registration and secure handling
-│   └── class-shortcode.php      # [numismatist] shortcode — renders the full UI
+│   ├── db-setup.php             # Table creation via dbDelta (includes user_id column)
+│   ├── class-migrations.php     # Incremental DB migrations (v1.2.0 adds user_id)
+│   ├── class-crud.php           # All DB operations — scoped to current user_id
+│   ├── class-ajax.php           # AJAX handlers — auth via nonce + is_user_logged_in()
+│   └── class-shortcode.php      # [numismatist] shortcode — renders full UI
 ├── js/
-│   └── numismatist.js           # Table rendering, pagination, modal, icon buttons, AJAX
+│   └── numismatist.js           # Table, pagination, modal, icon buttons, AJAX
 ├── css/
-│   └── numismatist.css          # Styles for table, toolbar, icon buttons, modal (admin + frontend)
+│   └── numismatist.css          # Styles: table, toolbar, icons, modal, yellow cancel button
 ├── deploy-vps.sh                # rsync deploy to remote VPS
 ├── deploy-local.sh              # Copy to local Docker environment
 ├── README.md
@@ -81,6 +86,7 @@ Numismatist/
 | Column | Type | Notes |
 |---|---|---|
 | id | BIGINT UNSIGNED | Primary key, auto-increment |
+| **user_id** | **BIGINT UNSIGNED** | **WordPress user ID — enforces per-user isolation** |
 | name | VARCHAR(255) | Required |
 | url | VARCHAR(2048) | External reference link |
 | year | SMALLINT | Coin issue year |
@@ -96,17 +102,24 @@ Numismatist/
 
 ## Deployment
 
-See `deploy-vps.sh` (rsync to remote VPS with permission fix) and `deploy-local.sh` (rsync to local Docker environment).
+See `deploy-vps.sh` (rsync to VPS + permission fix) and `deploy-local.sh` (rsync to local Docker).
 
 ## Changelog
 
+### 1.2.0
+- **Fix:** ДОДАТИ button now works for all logged-in users, not just `manage_options` admins.
+- **New:** Multi-user support — `user_id` column added to the table; every query is scoped to the current user.
+- **New:** Migration `1.2.0` automatically adds `user_id` to existing installs without data loss.
+- **New:** Yellow СКАСУВАТИ button in the modal footer for distinct visual identity.
+- **Fix:** AJAX capability check changed from `manage_options` to `is_user_logged_in()`.
+- **Fix:** Filter dropdowns (year, material) now show only the current user's values.
+- Updated README with multi-user documentation.
+
 ### 1.1.0
 - Added `[numismatist]` shortcode for frontend display.
-- Admin panel page replaced with setup instructions + shortcode reference.
-- Edit / Delete text buttons replaced with compact SVG icon buttons (✏ / 🗑).
-- Visitors see the table without action controls; admins see full CRUD.
-- CSS now works both in the admin area and on frontend pages.
-- Added responsive styles for mobile screens.
+- Admin panel replaced with setup instructions + shortcode reference.
+- Edit / Delete text buttons replaced with compact SVG icon buttons.
+- Responsive styles for mobile screens.
 
 ### 1.0.0
 - Initial release.
