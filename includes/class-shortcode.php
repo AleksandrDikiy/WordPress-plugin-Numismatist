@@ -109,7 +109,7 @@ final class Num_Shortcode {
 		}
 
 		// Кількість колонок таблиці: з колонкою «Дії» або без неї.
-		$col_count = $can_edit ? 6 : 5;
+		$col_count = $can_edit ? 7 : 6;
 
 		ob_start();
 		?>
@@ -152,12 +152,13 @@ final class Num_Shortcode {
 					<thead>
 						<tr>
 							<th class="num-col-num">№</th>
+							<th class="num-col-photo"><?php esc_html_e( 'Фото', 'numismatist' ); ?></th>
 							<th class="num-col-name"><?php esc_html_e( 'Назва', 'numismatist' ); ?></th>
 							<th class="num-col-year"><?php esc_html_e( 'Рік', 'numismatist' ); ?></th>
-							<th class="num-col-photo"><?php esc_html_e( 'Фото', 'numismatist' ); ?></th>
+							<th class="num-col-material"><?php esc_html_e( 'Матеріал', 'numismatist' ); ?></th>
 							<th class="num-col-qty"><?php esc_html_e( 'Кількість', 'numismatist' ); ?></th>
 							<?php if ( $can_edit ) : ?>
-								<th class="num-col-actions"><?php esc_html_e( 'Дії', 'numismatist' ); ?></th>
+								<th class="num-col-actions num-col-actions--center"><?php esc_html_e( 'Дії', 'numismatist' ); ?></th>
 							<?php endif; ?>
 						</tr>
 					</thead>

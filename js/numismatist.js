@@ -84,8 +84,8 @@
 	// Таймер дебаунсу для поля пошуку.
 	let searchTimer = null;
 
-	// Кількість колонок таблиці (6 — з колонкою «Дії», 5 — без неї).
-	const colCount = canEdit ? 6 : 5;
+	// Кількість колонок таблиці (7 — з колонкою «Дії», 6 — без неї).
+	const colCount = canEdit ? 7 : 6;
 
 	// ── AJAX-хелпер ───────────────────────────────────────────────────────────
 
@@ -177,15 +177,16 @@
 		const offset = ( page - 1 ) * perPage;
 
 		const rows = items.map( function ( coin, i ) {
-			const num  = offset + i + 1;
-			const name = escHtml( coin.name );
-			const year = coin.year ? escHtml( String( coin.year ) ) : '—';
-			const qty  = coin.quantity !== undefined ? escHtml( String( coin.quantity ) ) : '0';
+			const num      = offset + i + 1;
+			const name     = escHtml( coin.name );
+			const year     = coin.year ? escHtml( String( coin.year ) ) : '—';
+			const material = coin.material ? escHtml( coin.material ) : '—';
+			const qty      = coin.quantity !== undefined ? escHtml( String( coin.quantity ) ) : '0';
 
-			// Посилання на фото монети (зовнішня сторінка).
-			const photoHtml = coin.url
-				? '<a href="' + escAttr( coin.url ) + '" target="_blank" rel="noopener noreferrer" class="num-photo-link">Фото ↗</a>'
-				: '—';
+			// Мініатюра фото монети у таблиці.
+			const photoHtml = coin.photo
+				? '<img src="' + escAttr( coin.photo ) + '" alt="" class="num-table-photo" />'
+				: '';
 
 			// Для авторизованих: назва є кліковим посиланням для відкриття форми редагування.
 			const nameCell = canEdit
@@ -194,7 +195,7 @@
 
 			// Колонка «Дії» з іконками редагування та видалення (тільки для авторизованих).
 			const actionsCell = canEdit
-				? '<td class="num-col-actions">' +
+				? '<td class="num-col-actions num-col-actions--center">' +
 					'<button class="num-icon-btn num-btn-edit" data-id="' + escAttr( String( coin.id ) ) + '" title="Редагувати">' + ICON_EDIT + '</button>' +
 					'<button class="num-icon-btn num-btn-delete" data-id="' + escAttr( String( coin.id ) ) + '" title="Видалити">' + ICON_DEL + '</button>' +
 				'</td>'
@@ -203,9 +204,10 @@
 			return (
 				'<tr data-id="' + escAttr( String( coin.id ) ) + '">' +
 					'<td class="num-col-num">' + num + '</td>' +
+					'<td class="num-col-photo">' + photoHtml + '</td>' +
 					'<td class="num-col-name">' + nameCell + '</td>' +
 					'<td class="num-col-year">' + year + '</td>' +
-					'<td class="num-col-photo">' + photoHtml + '</td>' +
+					'<td class="num-col-material">' + material + '</td>' +
 					'<td class="num-col-qty">' + qty + '</td>' +
 					actionsCell +
 				'</tr>'
